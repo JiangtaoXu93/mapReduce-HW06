@@ -2,7 +2,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import scala.util.Try
 object main {
   def main(args: Array[String]): Unit = {
-       def SONG_ID = 23
+    def TRACK_ID = 0
     def ARTIST_ID = 16
     def ALBUM = 22
     def DURATION = 5
@@ -21,7 +21,7 @@ object main {
     val input = sc.textFile("MillionSongSubset/song_info.csv")
     val songInfo = input.mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }.map(line => line.split(";")).persist()
 
-    val numberOfSongs = songInfo.filter(line => !line(SONG_ID).isEmpty).map(line => line(SONG_ID)).distinct().count()
+    val numberOfSongs = songInfo.filter(line => !line(TRACK_ID).isEmpty).map(line => line(TRACK_ID)).distinct().count()
     System.out.println("Number of distinct songs are: "+ numberOfSongs)
 
     val numberOfArtists = songInfo.filter(line => !line(ARTIST_ID).isEmpty).map(line => line(ARTIST_ID)).distinct().count()
@@ -31,23 +31,23 @@ object main {
     val numberOfAlbum = artistAlbumTuple.countByKey().foldLeft(0l)(_+_._2)
     System.out.println("Number of distinct albums are: "+ numberOfAlbum)
 
-    val songLoudnessTuple = songInfo.filter(line => !line(SONG_ID).isEmpty && Try(line(LOUDNESS).toFloat).isSuccess).map(line => (line(SONG_ID),line(LOUDNESS).toFloat)).distinct()
+    val songLoudnessTuple = songInfo.filter(line => !line(TRACK_ID).isEmpty && Try(line(LOUDNESS).toFloat).isSuccess).map(line => (line(TRACK_ID),line(LOUDNESS).toFloat)).distinct()
     val top5LoudestSongs = songLoudnessTuple.sortBy(_._2).take(5)
     System.out.println("Top 5 Loudest songs are: "+ top5LoudestSongs.toList)
 
-    val longSongTuple = songInfo.filter(line => !line(SONG_ID).isEmpty && Try(line(DURATION).toFloat).isSuccess).map(line => (line(SONG_ID),line(DURATION).toFloat)).distinct()
+    val longSongTuple = songInfo.filter(line => !line(TRACK_ID).isEmpty && Try(line(DURATION).toFloat).isSuccess).map(line => (line(TRACK_ID),line(DURATION).toFloat)).distinct()
     val top5LongestSongs = longSongTuple.sortBy(_._2,false).take(5)
     System.out.println("Top 5 Longest songs are: "+ top5LongestSongs.toList)
 
-    val fastSongTuple = songInfo.filter(line => !line(SONG_ID).isEmpty && Try(line(TEMPO).toFloat).isSuccess).map(line => (line(SONG_ID),line(TEMPO).toFloat)).distinct()
+    val fastSongTuple = songInfo.filter(line => !line(TRACK_ID).isEmpty && Try(line(TEMPO).toFloat).isSuccess).map(line => (line(TRACK_ID),line(TEMPO).toFloat)).distinct()
     val top5FastestSongs = fastSongTuple.sortBy(_._2,false).take(5)
     System.out.println("Top 5 Fastest songs are: "+ top5FastestSongs.toList)
 
-    val artistFamiliarityTuple = songInfo.filter(line => !line(SONG_ID).isEmpty && Try(line(FAMILIARITY).toFloat).isSuccess).map(line => (line(SONG_ID),line(FAMILIARITY).toFloat)).distinct()
+    val artistFamiliarityTuple = songInfo.filter(line => !line(TRACK_ID).isEmpty && Try(line(FAMILIARITY).toFloat).isSuccess).map(line => (line(TRACK_ID),line(FAMILIARITY).toFloat)).distinct()
     val top5FamiliarArtist = artistFamiliarityTuple.sortBy(_._2,false).take(5)
     System.out.println("Top 5 most familiar artists are: "+ top5FamiliarArtist.toList)
 
-    val songHotnessTuple = songInfo.filter(line => !line(SONG_ID).isEmpty && Try(line(SONG_HOT).toFloat).isSuccess).map(line => (line(SONG_ID),line(SONG_HOT).toFloat)).distinct()
+    val songHotnessTuple = songInfo.filter(line => !line(TRACK_ID).isEmpty && Try(line(SONG_HOT).toFloat).isSuccess).map(line => (line(TRACK_ID),line(SONG_HOT).toFloat)).distinct()
     val top5HottestSongs = songHotnessTuple.sortBy(_._2,false).take(5)
     System.out.println("Top 5 most Hottest songs are: "+ top5HottestSongs.toList)
 
@@ -59,9 +59,11 @@ object main {
     val top5PopularKey = keyCountTuple.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
     System.out.println("Top 5 most popular keys are: "+ top5PopularKey.toList)
 
-    val artistSongTuple = songInfo.filter(line => !line(ARTIST_ID).isEmpty && !line(SONG_ID).isEmpty).map(line => (line(ARTIST_ID), line(SONG_ID))).distinct()
+    val artistSongTuple = songInfo.filter(line => !line(ARTIST_ID).isEmpty && !line(TRACK_ID).isEmpty).map(line => (line(ARTIST_ID), line(TRACK_ID))).distinct()
     val top5ProlificArtists = artistSongTuple.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
     System.out.println("Top 5 most prolific artists are: "+ top5ProlificArtists.toList)
+
+
 
 
     val ignored = Set(
@@ -73,6 +75,7 @@ object main {
     val wordsCount = words.filter{ !ignored.contains(_) }.map(w => (w,1))
     val top5Words = wordsCount.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
     System.out.println("Top 5 most common words in titles are: "+ top5Words.toList)
+
 
   }
 }
