@@ -31,7 +31,7 @@ object millionSong {
     val songInfo = input.mapPartitionsWithIndex { (idx, iterate) => if (idx == 0) iterate.drop(1) else iterate }.map(line => line.split(";")).persist()
 
     val genreInput = sc.textFile("input/artist_terms.csv")
-    val termInfo = genreInput.mapPartitionsWithIndex { (idx, iterate) => if (idx == 0) iterate.drop(1) else iterate }.map(line => line.split(";")).persist()
+    val termInfo = genreInput.mapPartitionsWithIndex { (idx, iterate) => if (idx == 0) iterate.drop(1) else iterate }.map(line => line.split(",")).persist()
 
     val artistHotnessTuple = songInfo.filter(line => !line(ARTIST_ID).isEmpty && Try(line(ARTIST_HOT).toFloat).isSuccess).map(line => (line(ARTIST_ID),line(ARTIST_HOT).toFloat)).distinct().persist()
 
