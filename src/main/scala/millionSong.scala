@@ -34,6 +34,7 @@ object millionSong {
     val termInfo = genreInput.mapPartitionsWithIndex { (idx, iterate) => if (idx == 0) iterate.drop(1) else iterate }.map(line => line.split(",")).persist()
 
     val artistHotnessTuple = songInfo.filter(line => !line(ARTIST_ID).isEmpty && Try(line(ARTIST_HOT).toFloat).isSuccess).map(line => (line(ARTIST_ID),line(ARTIST_HOT).toFloat)).distinct().persist()
+        //the reason to persist artistHotnessTuple is that this tuple will be used more than once
 
     getDistinctSongs(sc, songInfo)
     getDistinctArtists(sc, songInfo)
