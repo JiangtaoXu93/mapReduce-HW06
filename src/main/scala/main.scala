@@ -1,7 +1,7 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import scala.util.Try
 object main {
-  def main(args: Array[String]): Unit = {
+    def main(args: Array[String]): Unit = {
     def TRACK_ID = 0
     def ARTIST_ID = 16
     def ALBUM = 22
@@ -14,6 +14,11 @@ object main {
     def KEY = 8
     def KEY_CONFIDENCE = 9
     def SONG_TITLE = 24
+    def ARTIST_ID_IN_TERM = 0
+    def ARTIST_TERM = 1
+
+
+
 
 
     val conf = new SparkConf().setMaster("local").setAppName("Million Music")
@@ -51,7 +56,7 @@ object main {
     val top5HottestSongs = songHotnessTuple.sortBy(_._2,false).take(5)
     System.out.println("Top 5 most Hottest songs are: "+ top5HottestSongs.toList)
 
-    val artistHotnessTuple = songInfo.filter(line => !line(ARTIST_ID).isEmpty && Try(line(ARTIST_HOT).toFloat).isSuccess).map(line => (line(ARTIST_ID),line(ARTIST_HOT).toFloat)).distinct()
+    val artistHotnessTuple = songInfo.filter(line => !line(ARTIST_ID).isEmpty && Try(line(ARTIST_HOT).toFloat).isSuccess).map(line => (line(ARTIST_ID),line(ARTIST_HOT).toFloat)).distinct().persist()
     val top5HottestArtist = artistHotnessTuple.sortBy(_._2,false).take(5)
     System.out.println("Top 5 most Hottest artists are: "+ top5HottestArtist.toList)
 
@@ -63,7 +68,15 @@ object main {
     val top5ProlificArtists = artistSongTuple.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
     System.out.println("Top 5 most prolific artists are: "+ top5ProlificArtists.toList)
 
-
+    val genreInput = sc.textFile("MillionSongSubset/artist_terms.csv")
+    val termInfo = genreInput.mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }.map(line => line.split(",")).persist()
+    val artistGenreTuple = termInfo.filter(line => !line(ARTIST_ID_IN_TERM).isEmpty&& !line(ARTIST_TERM).isEmpty)
+      .map(line => (line(ARTIST_ID_IN_TERM),line(ARTIST_TERM)))
+    val termHotnessInfo = artistGenreTuple.join(artistHotnessTuple).map{case (artist,(term, hot)) => (term,hot)}
+    val hottestGenre =  termHotnessInfo.combineByKey((v) => (v, 1),(acc: (Float, Int), v) => (acc._1 + v, acc._2 + 1),(acc1:(Float, Int), acc2:(Float, Int)) => (acc1._1 + acc2._1, acc1._2 + acc2._2)
+    ).map{ case (key, value) => (key, value._1 / value._2.toFloat)}
+    val top5HottestGenre = hottestGenre.sortBy(_._2,false).take(5)
+    System.out.println("Top 5 most hottes genres are: "+ top5HottestGenre.toList)
 
 
     val ignored = Set(
