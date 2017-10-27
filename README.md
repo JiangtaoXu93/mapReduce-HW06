@@ -8,8 +8,8 @@ http://janvitek.org/pdpmr/f17/task-a6-high-fidelity.html
 
 #### Prepare
 
-1) Make sure your enviroment have installed scala, scala should have the same version as Spark build-in scala.
-2) Change `HADOOP_HOME`, `SPARK_HOME`,`SCALA_HOME`, `HADOOP_VERSION` to be same as your environment.
+1) Make sure your enviroment have installed scala, scala should have the same version as Spark build-in scala (or you can use scala path provided in repository).
+2) Change `HADOOP_HOME`, `SPARK_HOME`,`SCALA_HOME`, `HADOOP_VERSION` as same as your environment.
 3) Put your test data into `input` directory.
 4) If you are planning to run big-corpus song dataset, use `line => line.split(";")` in 
 millionSong.scala: line 34

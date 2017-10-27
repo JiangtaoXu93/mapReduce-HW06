@@ -1,6 +1,6 @@
 #HADOOP_HOME=/path/to/your/hadoop/home
 #SPARK_HOME=/path/to/your/spark/home
-SCALA_HOME=~/scala/scala-2.11.8/bin
+SCALA_HOME=scala/scala-2.11.8/bin
 HADOOP_VERSION=2.8.1
 MY_CLASSPATH=${HADOOP_HOME}/share/hadoop/common/hadoop-common-${HADOOP_VERSION}.jar:${SPARK_HOME}/jars/*:${HADOOP_HOME}/share/hadoop/mapreduce/*:out:.
 PROJECT_BASE=src/main/scala
