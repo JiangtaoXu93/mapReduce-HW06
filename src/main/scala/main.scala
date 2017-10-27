@@ -72,6 +72,7 @@ object main {
     val words = songInfo.flatMap(line => line(SONG_TITLE).toUpperCase().split(" ")).filter { !_.isEmpty }
     val wordsCount = words.filter{ !ignored.contains(_) }.map(w => (w,1))
     val top5Words = wordsCount.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
+    System.out.println("Top 5 most common words in titles are: "+ top5Words.toList)
 
   }
 }
