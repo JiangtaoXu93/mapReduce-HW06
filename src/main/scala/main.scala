@@ -2,7 +2,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import scala.util.Try
 object main {
   def main(args: Array[String]): Unit = {
-    def SONG_ID = 23
+       def SONG_ID = 23
     def ARTIST_ID = 16
     def ALBUM = 22
     def DURATION = 5
@@ -13,13 +13,9 @@ object main {
     def FAMILIARITY = 19
     def KEY = 8
     def KEY_CONFIDENCE = 9
-    val ignored = Set(
-      "THAT", "WITH", "THE", "AND", "TO", "OF",
-      "A", "IT", "SHE", "HE", "YOU", "IN", "I",
-      "HER", "AT", "AS", "ON", "THIS", "FOR",
-      "BUT", "NOT", "OR")
-    
-    
+    def SONG_TITLE = 24
+
+
     val conf = new SparkConf().setMaster("local").setAppName("Million Music")
     val sc = new SparkContext(conf)
     val input = sc.textFile("MillionSongSubset/song_info.csv")
@@ -67,6 +63,15 @@ object main {
     val top5ProlificArtists = artistSongTuple.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
     System.out.println("Top 5 most prolific artists are: "+ top5ProlificArtists.toList)
 
+
+    val ignored = Set(
+      "THAT", "WITH", "THE", "AND", "TO", "OF",
+      "A", "IT", "SHE", "HE", "YOU", "IN", "I",
+      "HER", "AT", "AS", "ON", "THIS", "FOR",
+      "BUT", "NOT", "OR")
+    val words = songInfo.flatMap(line => line(SONG_TITLE).toUpperCase().split(" ")).filter { !_.isEmpty }
+    val wordsCount = words.filter{ !ignored.contains(_) }.map(w => (w,1))
+    val top5Words = wordsCount.countByKey().toSeq.sortWith(_._2 > _._2).take(5)
 
   }
 }
