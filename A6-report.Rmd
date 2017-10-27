@@ -1,0 +1,140 @@
+---
+title: 'Assignment 6: High Fidelity'
+author: "Ankita, Jiangtao"
+date: "10/26/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = normalizePath(getwd()))
+```
+
+###<span style = "color:#588bae">Objective</span> 
+ Given a million song dataset, learn the basic of sparks by retrieving the number of distant songs, artists, albums and numerous top 5 attributes from the dataset.
+
+###<span style = "color:#588bae">Dataset</span> 
+ We are using a dataset based on the metadata in the Million Song Database. 
+ 
+###<span style = "color:#588bae">Preparing Data</span>
+ - Checks done to remove empty entries in the `track_id` and `artist_id` columns. 
+ - Check done to dis-regard non-float entries in `duration`, `tempo`, `song_hotness`, `artist_hotness` and  `key-confidence` columns.
+ 
+###<span style = "color:#588bae">Implementation</span>
+  - Our solution first takes the two files 'song_info.csv' and 'artist_terms.csv' and converts it into `mapPartitions` that converts each partition of the source RDD into multiple elements of the result.
+  - After that, for each task like finding the distincts and top'5, we select only the required column from the RDD thus avoiding reading all the columns of the dataset everytime. This improves the execution time as well.
+  
+###<span style = "color:#588bae">Assumptions</span>
+  - We have used Track_Id instead of Title for all our calculation, because each `track_id` is unique to a song while a single `song_id` and `title` can belong to multiple tracks.
+  - We have also used Artist_Id instead of Artist_Names because in case of collaboration of two artists, a new Artist_Id is not created so we assume that the collaboration work belongs to the Artist_Id it is mapped to.
+  
+###<span style = "color:#588bae">Performance and Observation</span>
+  - Our program takes a total average time of 4.12 minutes for 5 iterations on the big corpus.
+  - For the subset dataset, the program took an average time of 8 seconds for 5 iterations.
+  - We observed that for the big corpus, one job -'Top 5 hottest genre' takes approximately 2.25 minutes. The reason for this is, a join operation is being performed between `song_info` and `artist_terms` to find the mean artist hotness in `artist_terms`. 
+  - For the small dataset, the join finished in less then 2 seconds but for large corpus, each stage had a lot tasks, since the tasks are proportional to the total number of partitions the operation need to handle. Hence there is a lot of Shuffle and spill operations thus causing the program to slow down.
+
+###<span style = "color:#588bae">Output</span>
+Following are the results when running the program on large dataset.
+
+- Number of Distinct songs : 
+    - Here we filter the track_id's and do a distinct count on them.
+```{r comment ='',echo = FALSE}
+cat(readLines('output/distinctSongs/part-00000'), sep = '\n')
+```
+
+- Number of Distinct artists : 
+    - Here we filter the artist_id's and do a distinct count on them.
+```{r comment ='',echo = FALSE}
+cat(readLines('output/distinctArtist/part-00000'), sep = '\n')
+```
+
+- Number of Distinct albums : 
+    - Here we filter the artist_id's and album and do a distinct on them.
+    - Then we use foldLeft and countByKey(i.e artist_id) all the distinct albums.
+```{r comment ='',echo = FALSE}
+cat(readLines('output/distinctAlbum/part-00000'), sep = '\n')
+```
+
+- Top 5 loudest songs :
+    - Here we filter the track_id's and loudness and create a map with (K,V) -> (Track_Id, Loudness).
+    - Then we do a descending sort on loudness and pick the top 5 loudest songs.
+```{r comment ='',echo = FALSE}
+cat("(Track Id, Loudness)",readLines('output/top5LoudestSongs/part-00000'), sep = '\n')
+```
+
+- Top 5 longest songs :
+    - Here we filter the track_id's and duration and create a map with (K,V) -> (Track_Id, Duration).
+    - Then we do a descending sort on duration and pick the top 5 longest songs.
+```{r comment ='',echo = FALSE}
+cat("(Track Id, Length)",readLines('output/top5LongestSongs/part-00000'), sep = '\n')
+```
+
+- Top 5 fastest songs :
+    - Here we filter the track_id's and tempo and create a map with (K,V) -> (Track_Id, tempo).
+    - Then we do a descending sort on tempo and pick the top 5 fastest songs.
+```{r comment ='',echo = FALSE}
+cat("(Track Id, Tempo)",readLines('output/top5FastestSongs/part-00000'), sep = '\n')
+```
+
+- Top 5 most familiar artists :
+    - Here we filter the artist_id's and familiarity and create a map with (K,V) -> (Artist_Id, Familiarity).
+    - Then we do a descending sort on familiarity and pick the top 5 familiar artists.
+```{r comment ='',echo = FALSE}
+cat("(Artist Id, Familiarity)",readLines('output/top5FamiliarArtist/part-00000'), sep = '\n')
+```
+
+- Top 5 hottest songs :
+    - Here we filter the track_id's and song_hotness and create a map with (K,V) -> (Track_Id, song_hotness).
+    - Then we do a descending sort on song_hotness and pick the top 5 hottest songs.
+```{r comment ='',echo = FALSE}
+cat("(Track Id, Hotness)",readLines('output/top5HottestSongs/part-00000'), sep = '\n')
+```
+
+- Top 5 hottest artists :
+    - Here we filter the artist_id's and artist_hotness and create a map with (K,V) -> (Artist_Id, artist_hotness).
+    - Then we do a descending sort on artist_hotness and pick the top 5 hottest artist.
+```{r comment ='',echo = FALSE}
+cat("(Artist Id, Hotness)",readLines('output/top5HottestArtist/part-00000'), sep = '\n')
+```
+
+- Top 5 hottest genres (mean artists hotness in artist_term) :
+    - Here we filter the artist_id's and artist_term from `artist_term.csv` and create (K,V) -> (Artist_Id, Artist_term)
+    - Then we join it with (Artist_Id, Artist_Hotness) and using a combineByKey, we get the Artist_term and their mean_artist-Hotness which we then sort by mean_artist-hotness and pick the top 5 hottest genre.
+```{r comment ='',echo = FALSE}
+cat("(Genre, Hotness)",readLines('output/top5HottestGenre/part-00000'), sep = '\n')
+```
+
+- Top 5 most popular keys (must have confidence > 0.7) :
+    - Here we filter the key's and key_confidence>0.7 and create a map with (K,V) -> (Key, Key_Confidence).
+    - Then we do a countByKey and sort them based on Key_Confidence and pick the top 5 most popular key.
+```{r comment ='',echo = FALSE}
+cat("(Key, Key Confidence)",readLines('output/top5PopularKeys/part-00000'), sep = '\n')
+```
+
+- Top 5 most prolific artists (include ex-equo items, if any) :
+    - Here we filter the artist_id and track_id and create a map with (K,V) -> (Artist_id, Track_id).
+    - Then we do a countByKey and get the top 5 prolific artist.
+```{r comment ='',echo = FALSE}
+cat("(Artist Id, Count of tracks)",readLines('output/top5ProlificArtist/part-00000'), sep = '\n')
+```
+
+- Top 5 most common words in song titles (excluding articles, prepositions, conjunctions) :
+    - Here from the song title, we filter out the articles, prepositions, conjunctions and empty values and then using countByKey, we calculate the word count of each word and get the top 5 most common words.
+```{r comment ='',echo = FALSE}
+cat("(Words, Count)",readLines('output/top5CommonWords/part-00000'), sep = '\n')
+```
+
+###<span style = "color:#588bae">Conclusion</span>
+  - Spark has lots of advantages over Hadoop MapReduce framework in terms of a the speed at which it executes the batch processing jobs because of its in memory computations. 
+  - We could finish all the jobs in ~4 minutes on a local environment which is a quite impossible to achieve using hadoop Map-Reduce.
+  - But also the same in-memory computations can be an overhead when performing tasks like join.
+
+### <span style='color:#588BAE'>Local Execution Environment Specifications:</span>
+
+  - Macintosh 2.5Ghz i7 Quad Core
+  - 16 GB RAM
+  - macOS Sierra Version 10.12.6
+  - Java version : 1.8 
+  - Scala version : 2.11.11
+  - Spark version : 2.2.0
