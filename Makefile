@@ -1,6 +1,6 @@
 #HADOOP_HOME=/path/to/your/hadoop/home
 #SPARK_HOME=/path/to/your/spark/home
-SCALA_HOME=scala/scala-2.11.8/bin
+SCALA_HOME=scala/scala-2.11.8
 HADOOP_VERSION=2.8.1
 MY_CLASSPATH=${HADOOP_HOME}/share/hadoop/common/hadoop-common-${HADOOP_VERSION}.jar:${SPARK_HOME}/jars/*:${HADOOP_HOME}/share/hadoop/mapreduce/*:out:.
 PROJECT_BASE=src/main/scala
@@ -27,7 +27,7 @@ AWS_INSTANCE_TYPE=m1.medium
 all: compile setup run
 
 compile:
-	${SCALA_HOME}/scalac -cp ${MY_CLASSPATH} -d ${JAR_NAME} ${PROJECT_BASE}/*.scala
+	${SCALA_HOME}/bin/scalac -cp ${MY_CLASSPATH} -d ${JAR_NAME} ${PROJECT_BASE}/*.scala
 
 run:
 	${SPARK_HOME}/bin/spark-submit --class ${MAIN_CLASS} ${JAR_NAME}
